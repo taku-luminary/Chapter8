@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import styles from "../../_styles/ArticleDetail.module.css";
+import styles from "./_styles/ArticleDetail.module.css";
 import { Post, PostResponse } from "../../_types/Post";
 import Image from "next/image";
 

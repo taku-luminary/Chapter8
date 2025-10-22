@@ -11,7 +11,7 @@ export default function Header() {
           <div className={styles.blog}>
             <Link href ="/" className={styles.contact}>Blog</Link>
           </div>
-          <Link href ="contact" className={styles.contact}>お問い合わせ</Link>
+          <Link href ="/contact" className={styles.contact}>お問い合わせ</Link>
         </div>
       </header>
   );

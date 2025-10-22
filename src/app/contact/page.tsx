@@ -1,6 +1,6 @@
 "use client";
 
-import styles from "../_styles/Contact.module.css";
+import styles from "./_styles/Contact.module.css";
 import { useState } from "react";
 
 
