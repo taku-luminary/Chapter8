@@ -1,0 +1,41 @@
+.article{
+  max-width:800px;
+  margin: 40px auto 0px auto;        /* ← これで画面中央に来る */
+}
+
+.dayCategory{
+  max-width: 800px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color:gray;
+  font-size:11px;
+  padding: 10px 30px 0px 30px; 
+}
+
+.categories {
+  margin-left: auto; 
+  display: flex;                 /* カテゴリーを横並び */
+  gap: 8px;                      /* カテゴリー同士の間隔 */
+}
+
+.category{
+  background: #fff;
+  border: 1px solid royalblue;
+  color:royalblue;
+  height: 24px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  border-radius: 4px;
+  padding:1px 5px;
+}
+
+.title{
+  font-weight: normal; 
+  font-size: 22px;
+}
+
+.detailContent{
+  padding: 0 px;   
+}

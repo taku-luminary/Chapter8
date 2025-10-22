@@ -1,0 +1,70 @@
+.article{
+  max-width:800px;
+  margin: 40px auto 0px auto;        /* ← これで画面中央に来る */
+}
+
+.container {
+  display: flex;
+  align-items: center;
+  height: 70px;
+  width: 100%;
+  background-color: rgba(34, 49, 52, 0.9);
+}
+
+.blog {
+  padding: 20px;
+  color:#fff;
+  font-weight: bold;
+  font-size:14px;
+}
+
+.contact {
+  color:#fff;
+  margin-left: auto; 
+  padding: 12px 16px;
+  text-decoration:none;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid lightgray;
+  width: 700px;
+  padding: 12px 45px 2px 13px;
+  margin: 30px auto; 
+  display:block;
+  text-decoration:none;
+  color:inherit;
+}
+
+.dayCategory{
+  max-width: 800px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color:gray;
+  font-size:11px;
+  padding: 10px 30px 0px 30px; 
+}
+
+.categories {
+  margin-left: auto; 
+  display: flex;                 /* カテゴリーを横並び */
+  gap: 8px;                      /* カテゴリー同士の間隔 */
+}
+
+.category{
+  background: #fff;
+  border: 1px solid royalblue;
+  color:royalblue;
+  height: 24px;
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  border-radius: 4px;
+  padding:1px 5px;
+}
+
+.title{
+  font-weight: normal; 
+  font-size: 22px;
+}
