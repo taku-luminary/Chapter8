@@ -1,16 +1,12 @@
 export type Post = {
-  id: string;
-  title: string;
-  content: string;      
-  createdAt: string;   
-  thumbnailUrl?: string | null; 
-  categories: string[];
-};
-
-export type PostResponse = {
-  post: Post;
+  id: string
+  title: string
+  content: string
+  createdAt: string
+  categories: { id: string; name: string }[]
+  thumbnail: { url: string; height: number; width: number }
 };
 
 export type ApiListResponse = {
-  posts: Post[];
+  contents: Post[];
 };
