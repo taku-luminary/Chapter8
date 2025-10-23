@@ -27,7 +27,7 @@ export default function ArticleDetails() {
           `https://buh411onxf.microcms.io/api/v1/posts/${id}`,// microCMSのエンドポイント
           {
             headers: {
-              'X-MICROCMS-API-KEY': 'W0kEhmwV55enrYOMy672ZmFL7q31NQU5EQjG', // APIキーをセット
+              'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_API_KEY as string,
             },
           },
         );
@@ -79,7 +79,7 @@ export default function ArticleDetails() {
 
   return (
     <div className={styles.article}>
-    {post.thumbnail ? ( <Image className={styles.picture} src={post.thumbnail.url} alt="" width={800} height={400} /> ) : null}
+    {post.thumbnail && ( <Image className={styles.picture} src={post.thumbnail.url} alt="" width={800} height={400} /> ) }
       <div className={styles.dayCategory}>
         <span>{formatDate(post.createdAt)}</span>
         <div className={styles.categories}>
