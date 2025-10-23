@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import styles from "./_styles/ArticleDetail.module.css";
-import { Post, PostResponse } from "../../_types/Post";
+import { Post } from "../../_types/Post";
 import Image from "next/image";
 
 export default function ArticleDetails() {
@@ -24,7 +24,12 @@ export default function ArticleDetails() {
     const fetcher = async () => {
       try {
         const res = await fetch(
-          `https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts/${id}`
+          `https://buh411onxf.microcms.io/api/v1/posts/${id}`,// microCMSのエンドポイント
+          {
+            headers: {
+              'X-MICROCMS-API-KEY': 'W0kEhmwV55enrYOMy672ZmFL7q31NQU5EQjG', // APIキーをセット
+            },
+          },
         );
 
         // 404（存在しない）と、それ以外のエラーを分けて扱う例
@@ -36,10 +41,8 @@ export default function ArticleDetails() {
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        
-        const data = (await res.json()) as PostResponse;
-        const one = data.post
-        setPost(one);
+        const data = (await res.json()) as Post;
+        setPost(data);
       } catch (e) {
         if (e instanceof Error) {
           setError(e.message);
@@ -76,13 +79,13 @@ export default function ArticleDetails() {
 
   return (
     <div className={styles.article}>
-    {post.thumbnailUrl ? ( <Image className={styles.picture} src={post.thumbnailUrl} alt="" width={800} height={400} /> ) : null}
+    {post.thumbnail ? ( <Image className={styles.picture} src={post.thumbnail.url} alt="" width={800} height={400} /> ) : null}
       <div className={styles.dayCategory}>
         <span>{formatDate(post.createdAt)}</span>
         <div className={styles.categories}>
-         {post.categories.map((category: string, index: number) => (
+         {post.categories.map((category, index) => (
             <div  key={index} className={styles.category}>
-              {category}
+              {category.name}
             </div>
           ))}   
         </div> 

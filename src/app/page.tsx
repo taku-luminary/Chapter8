@@ -20,7 +20,11 @@ function Articles() {
         setIsLoading(true);
         setError(null);
         const res = await fetch(
-          "https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts",
+          "https://buh411onxf.microcms.io/api/v1/posts", {
+            headers: {
+              'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_API_KEY as string,
+            },
+          }
         );
         if (!res.ok) {
           // 一覧APIなら404はレアですが、念のため全ての非2xxをエラー扱い
@@ -28,7 +32,7 @@ function Articles() {
         }
         const data = (await res.json()) as ApiListResponse;
         // APIの形に合わせて安全に取り出す（data.postsが無い場合もnull合体で空配列に）
-        setPosts(data.posts);
+        setPosts(data.contents);
       } catch (e) {
         if (e instanceof Error) {
           setError(e.message);
@@ -75,7 +79,7 @@ function Articles() {
               {post.categories.map((category, index) => (
 
                 <div  key={index} className={styles.category}>
-                  {category}
+                  {category.name}
                 </div>
               ))}   
             </div> 
