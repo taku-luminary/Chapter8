@@ -38,6 +38,8 @@ export default function ArticleDetails() {
           setPost(null);
           return; // finally で isLoading を false にする
         }
+        console.log(res);
+
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
