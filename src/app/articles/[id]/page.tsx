@@ -23,14 +23,7 @@ export default function ArticleDetails() {
 
     const fetcher = async () => {
       try {
-        const res = await fetch(
-          `https://buh411onxf.microcms.io/api/v1/posts/${id}`,// microCMSのエンドポイント
-          {
-            headers: {
-              'X-MICROCMS-API-KEY': process.env.NEXT_PUBLIC_MICROCMS_API_KEY as string,
-            },
-          },
-        );
+        const res = await fetch(`/api/posts/${id}`);
 
         // 404（存在しない）と、それ以外のエラーを分けて扱う例
         if (res.status === 404) {
@@ -43,8 +36,8 @@ export default function ArticleDetails() {
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        const data = (await res.json()) as Post;
-        setPost(data);
+        const {post} = (await res.json()) as  { post: Post };
+        setPost(post);
       } catch (e) {
         if (e instanceof Error) {
           setError(e.message);
@@ -81,7 +74,7 @@ export default function ArticleDetails() {
 
   return (
     <div className={styles.article}>
-    {post.thumbnail && ( <Image className={styles.picture} src={post.thumbnail.url} alt="" width={800} height={400} /> ) }
+    {post.thumbnailUrl && ( <Image className={styles.picture} src={post.thumbnailUrl} alt="" width={800} height={400} /> ) }
       <div className={styles.dayCategory}>
         <span>{formatDate(post.createdAt)}</span>
         <div className={styles.categories}>

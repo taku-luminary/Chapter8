@@ -3,11 +3,7 @@
 import "./globals.css";
 import Header from "./_components/Header";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({children}:{children: React.ReactNode}) {
   return (
     <html lang="ja">
       <body>
@@ -21,9 +17,10 @@ export default function RootLayout({
 
 
 // ■理解（以下のコード意味）
-//  ①Next.jsでは{children}というpopsで、page.tsxなどの各ファイルで実行されたものを受け取る
+//  ①Next.jsでは{children}というpropsで、page.tsxなどの各ファイルで実行されたものを受け取る
 //  例：Next.js は内部では、以下のように呼び出す
-//   const pageJSX = <HomePage />; // たとえば app/page.tsx の内容
+//   const pageJSX = <HomePage />; 
+//  たとえば app/page.tsx の内容
 //  RootLayout({ children: pageJSX }); 
 // ②オブジェクトの型定義は{プロパティ：型}と書けない、代わりに{プロパティ}：{プロパティ：型}と書く
 //  従って{ children, }: { children: React.ReactNode; } と書いている
