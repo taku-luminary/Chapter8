@@ -1,0 +1,64 @@
+/* 全体レイアウト */
+.container {
+  display: grid;
+  grid-template-columns: 30vw 1fr;
+  min-height: 100vh;
+}
+
+/* 左側のバー */
+.sidebar {
+  width: 30vw;
+  background: #f8f9fa;
+}
+
+.sidebarLetter {
+  padding:15px 10px;
+}
+
+.sidebarLetter:active {
+  background-color:rgb(189, 211, 242);
+}
+
+
+/* 右側のメイン */
+.main{
+  font-weight: bold;
+}
+
+.topLetter{
+  float:left;
+  font-size:20px;
+  margin:15px 0px 0px 15px;
+}
+
+.newButton{
+  float:right;
+  color:white;
+  font-size:17px;
+  background-color:rgb(49, 125, 232);
+  padding:8px 15px;
+  margin:15px 15px 0px 0px;
+  border-radius:5px;
+}
+
+.articleBox{
+  margin:110px 0px 0px 20px;
+  font-size:20px;
+}
+
+.article{
+  margin:0px 0px 0px 20px;
+}
+
+.articleDate{
+  margin:0px 0px 0px 22px;
+  font-size:17px;
+  color:gray;
+  font-weight: normal; 
+}
+
+.border{
+  border-bottom: 1px solid #ddd; 
+  padding-bottom: 4px;
+  margin:10px 0px 0px 0px;
+}

@@ -3,7 +3,7 @@
 import styles from "./_styles/App.module.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Post, ApiListResponse } from "./_types/Post";
+import { Post } from "./_types/Post";
 
 function Articles() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -19,22 +19,20 @@ function Articles() {
       try {
         setIsLoading(true);
         setError(null);
-        const res = await fetch(
-          "https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts",
-        );
+        const res = await fetch('/api/posts');
         if (!res.ok) {
           // 一覧APIなら404はレアですが、念のため全ての非2xxをエラー扱い
           throw new Error(`HTTP ${res.status}`);
         }
-        const data = (await res.json()) as ApiListResponse;
+        const {posts} = (await res.json()) as { posts: Post[] };
         // APIの形に合わせて安全に取り出す（data.postsが無い場合もnull合体で空配列に）
-        setPosts(data.posts);
+        setPosts(posts);
       } catch (e) {
         if (e instanceof Error) {
-          setError(e.message);
-        } else {
-          setError("一覧の取得に失敗しました");
-        }
+            setError(e.message);
+          } else {
+            setError("一覧の取得に失敗しました");
+          }
         setPosts([]);
       } finally {
         setIsLoading(false);
@@ -75,7 +73,7 @@ function Articles() {
               {post.categories.map((category, index) => (
 
                 <div  key={index} className={styles.category}>
-                  {category}
+                  {category.name}
                 </div>
               ))}   
             </div> 
