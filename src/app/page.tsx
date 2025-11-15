@@ -3,7 +3,7 @@
 import styles from "./_styles/App.module.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Post} from "./_types/Post";
+import { Post } from "./_types/Post";
 
 function Articles() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -29,10 +29,10 @@ function Articles() {
         setPosts(posts);
       } catch (e) {
         if (e instanceof Error) {
-          setError(e.message);
-        } else {
-          setError("一覧の取得に失敗しました");
-        }
+            setError(e.message);
+          } else {
+            setError("一覧の取得に失敗しました");
+          }
         setPosts([]);
       } finally {
         setIsLoading(false);
