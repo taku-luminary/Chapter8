@@ -30,6 +30,17 @@ export default function RootLayout({children}:{children: React.ReactNode}) {
 // ・これは{children}はconst {children} = propsを省略した形
 // ・基本的に引数に {children} と見えたら、props から children だけ取り出していると思えばいい 
 
+//・以の３つは全て同じ
+// ①function Foo(props) {
+// const children = props.children;
+// }
+
+// ②function Foo(props) {
+// const { children } = props;
+// }
+
+// ③function Foo({ children }) { }
+
 // ■型について
 // ・{children: React.ReactNode}は:の左側の中身にはオブジェクトの中にchildrenがありその型はReact.ReactNodeという意味
 // ・ReactNode は文字列・数値・React 要素・配列・null など画面に描画できるもの全般を受け取れる“広い型”

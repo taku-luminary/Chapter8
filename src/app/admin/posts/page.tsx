@@ -28,8 +28,8 @@ export default function AdminPostsPage() {
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        const {posts} = (await res.json()) as { posts: Post[] };
-        setPosts(posts);
+        const {data} = (await res.json()) as { data: Post[] };
+        setPosts(data);
       } catch (e) {
         if (e instanceof Error) {
             setError(e.message);
@@ -64,21 +64,14 @@ export default function AdminPostsPage() {
     return <p>記事がありません。</p>;
   }
 
-
   return ( 
   <>
-  <div className={styles.container}>
-
-    {/* 左側のバー */}
-    <aside className={styles.sidebar}>
-      <div className={styles.sidebarLetter}>記事一覧</div>
-      <div className={styles.sidebarLetter}>カテゴリー一覧</div>
-    </aside>
-
     {/* 右側のメイン */}
     <main className={styles.main}>
-      <h2 className={styles.topLetter}>記事一覧 </h2>
-      <input type="submit" value="新規作成" className={styles.newButton}/>
+      <div className={styles.mainHeader}>
+        <h2 className={styles.topLetter}>記事一覧 </h2>
+        <Link href ="/admin/posts/new" className={styles.newButton}>新規作成</Link>
+      </div>
         {posts.map((p) => (
           <div className={styles.articleBox} key={p.id}>
             <div className={styles.article}>{p.title}</div>
@@ -87,7 +80,6 @@ export default function AdminPostsPage() {
           </div>
         ))}
     </main>
-  </div>
   </>
   );
 }

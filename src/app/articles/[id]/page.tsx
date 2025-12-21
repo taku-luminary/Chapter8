@@ -11,8 +11,7 @@ export default function ArticleDetails() {
   const [post, setPost] = useState<Post | null>(null);
   const [error, setError] = useState("");
 
-  const { id } = useParams();
-
+  const { id } = useParams<{ id: string }>();
   useEffect(() => {
     if (!id) return;
 
@@ -78,12 +77,12 @@ export default function ArticleDetails() {
       <div className={styles.dayCategory}>
         <span>{formatDate(post.createdAt)}</span>
         <div className={styles.categories}>
-         {post.categories.map((category, index) => (
-            <div  key={index} className={styles.category}>
-              {category.name}
+          {(post.postCategories ?? []).map((pc) => (
+            <div key={pc.category.id} className={styles.category}>
+              {pc.category.name}
             </div>
-          ))}   
-        </div> 
+          ))}
+        </div>
       </div> 
       <div className={styles.detailContent}>
         <p className={styles.title}>{post.title}</p>

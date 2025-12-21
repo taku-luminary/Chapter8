@@ -1,17 +1,18 @@
 /* 全体レイアウト */
 .container {
   display: grid;
-  grid-template-columns: 30vw 1fr;
+  grid-template-columns: 15vw 1fr;
   min-height: 100vh;
 }
 
 /* 左側のバー */
 .sidebar {
-  width: 30vw;
+  width: 15vw;
   background: #f8f9fa;
 }
 
 .sidebarLetter {
+  display: block;
   padding:15px 10px;
 }
 
@@ -25,29 +26,32 @@
   font-weight: bold;
 }
 
+.mainHeader {
+  display: flex;
+  justify-content: space-between; /* 左右に配置 */
+  align-items: center;            /* 縦位置を揃える */
+  margin: 25px 20px 0 20px;       /* 全体の余白 */
+}
+
 .topLetter{
-  float:left;
   font-size:20px;
-  margin:15px 0px 0px 15px;
 }
 
 .newButton{
-  float:right;
   color:white;
   font-size:17px;
   background-color:rgb(49, 125, 232);
   padding:8px 15px;
-  margin:15px 15px 0px 0px;
   border-radius:5px;
 }
 
 .articleBox{
-  margin:110px 0px 0px 20px;
+  margin:50px 0px 0px 20px;
   font-size:20px;
 }
 
 .article{
-  margin:0px 0px 0px 20px;
+  margin:20px 0px 0px 20px;
 }
 
 .articleDate{
@@ -62,3 +66,4 @@
   padding-bottom: 4px;
   margin:10px 0px 0px 0px;
 }
+
