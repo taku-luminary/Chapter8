@@ -12,5 +12,6 @@ export type Post = {
   createdAt: string;
   updatedAt: string;
   thumbnailUrl: string;          // ← microCMSの thumbnail.url ではなく単独プロパティ
+  categories: Category[];
   postCategories: { category: { id: number; name: string } }[]
 };

@@ -73,11 +73,11 @@ export default function AdminPostsPage() {
         <Link href ="/admin/posts/new" className={styles.newButton}>新規作成</Link>
       </div>
         {posts.map((p) => (
-          <div className={styles.articleBox} key={p.id}>
+          <Link href ={`/admin/posts//${p.id}`} className={styles.articleBox} key={p.id}>
             <div className={styles.article}>{p.title}</div>
             <div className={styles.articleDate}>{formatDate(p.createdAt)}</div>
             <div className={styles.border}></div>
-          </div>
+          </Link>
         ))}
     </main>
   </>

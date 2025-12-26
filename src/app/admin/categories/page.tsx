@@ -33,7 +33,7 @@ export default function AdminCategoriesPage() {
         <div className={styles.articleBox}>
           {categories.map((c) => (
           <>
-            <div key={c.id} className={styles.article}>{c.name}</div>
+            <Link href={`/admin/categories/${c.id}`} key={c.id} className={styles.article}>{c.name}</Link>
             <div className={styles.border}></div>
           </>
           ))}

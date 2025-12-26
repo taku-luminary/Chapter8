@@ -70,12 +70,11 @@ function Articles() {
             <span>{formatDate(post.createdAt)}</span>
 
             <div className={styles.categories}>
-              {(post.categories ?? []).map((category, index) => (
-
-                <div  key={index} className={styles.category}>
-                  {category.name}
-                </div>
-              ))}   
+            {(post.postCategories ?? []).map((pc) => (
+              <div key={pc.category.id}>
+                {pc.category.name}
+              </div>
+            ))}
             </div> 
           </div> 
           <p className={styles.title}>{post.title}

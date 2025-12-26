@@ -23,7 +23,7 @@ export default function ArticleDetails() {
     const fetcher = async () => {
       try {
         const res = await fetch(`/api/posts/${id}`);
-
+        console.log(res);
         // 404（存在しない）と、それ以外のエラーを分けて扱う例
         if (res.status === 404) {
           // 見つからない：エラーではなく「0件」という扱いにする
