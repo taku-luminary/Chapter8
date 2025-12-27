@@ -1,12 +1,15 @@
 "use client";
-import styles from "../../_styles_admin/New.module.css";
+import styles from "./_styles/Categories_New.module.css";
 import { useState } from "react";  
+import { CategoryForm } from "../../_components/CategoryForm";
 
 export default function AdminCategoriesNewPage() {
   const [name, setName] = useState("");
-
-const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
+  if (isSubmitting) return; // 二重送信ガード
+  setIsSubmitting(true); 
   try {
     const body = {name};
     const res = await fetch("/api/admin/categories", {
@@ -30,26 +33,21 @@ const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   console.error(error);
   alert("通信エラーが発生しました");
   }
+  finally {
+    setIsSubmitting(false); // 送信終了（成功でも失敗でも）
+  }
 };
 
   return(
-  <>
-    <form method="post" className={styles.form} onSubmit={handleSubmit}>
-      {/* タイトル */}
-      <div className={styles.row}>
-        <label htmlFor="title" className={styles.label}>カテゴリー名</label>
-        <input      
-          id="title"
-          name="title"
-          type="text"
-          value={name}   
-          onChange={(e) => setName(e.target.value)}
-          className={styles.input}/>
-      </div>
-      <div className={styles.row}>
-        <button type="submit" className={styles.button}>作成</button>
-        </div>
-    </form>
-  </>
+    <div className={styles.container}>
+      <h2 className={styles.topLetter}>カテゴリー作成</h2>
+      <CategoryForm
+        name={name}
+        onChangeName={setName}
+        onSubmit={handleSubmit}
+        submitLabel="作成"
+        isSubmitting={isSubmitting}
+      />
+    </div>
   )
 };

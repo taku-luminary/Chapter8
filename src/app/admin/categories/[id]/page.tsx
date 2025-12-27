@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styles from "../../_styles_admin/New.module.css";
+import styles from "./_styles/Categories_[id].module.css";
 import { Category} from "../../../_types/Post";
 import { useRouter, useParams } from "next/navigation";
+import { CategoryForm } from "../../_components/CategoryForm";
+import { UpdateCategoryRequestBody,CategoryApiResponse } from '@/app/_types/Category'
+
 
 export default function AdminEditCategory() {
   const [name, setName] = useState("");
@@ -19,12 +22,15 @@ export default function AdminEditCategory() {
       </div>
     );
   }
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (isSubmitting) return; // 二重送信ガード
+    setIsSubmitting(true); // 送信開
+
     try {
-      const body = {
+      const body:UpdateCategoryRequestBody = {
         name, 
       };
 
@@ -35,7 +41,7 @@ export default function AdminEditCategory() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
+        const data:CategoryApiResponse  = await res.json();
         alert(`エラーが発生しました: ${data.status ?? "不明なエラー"}`);
         return;
       }
@@ -46,68 +52,64 @@ export default function AdminEditCategory() {
     } catch (error) {
       console.error(error);
       alert("通信エラーが発生しました");
+    } finally {
+    setIsSubmitting(false); // 送信終了（成功でも失敗でも）
     }
   };
 
   const handleDelete = async () => {
-    const ok = confirm("本当に削除しますか？");
-    if (!ok) return;
+    try {
+      const ok = confirm("本当に削除しますか？");
+      if (!ok) return;
 
-    const res = await fetch(`/api/admin/categories/${postId}`, {
-      method: "DELETE",
-    });
+      const res = await fetch(`/api/admin/categories/${postId}`, {
+        method: "DELETE",
+      });
 
-    if (!res.ok) {
-      alert("削除に失敗しました");
-      return;
+      if (!res.ok) {
+        alert("削除に失敗しました");
+        return;
+      }
+
+      alert("削除しました！");
+      router.push("/admin/posts");
+    } catch (error) {
+      console.error(error);
+      alert("通信エラーが発生しました");
     }
-
-    alert("削除しました！");
-    router.push("/admin/posts");
   };
 
   useEffect(() => {
-    (async () => {
-      const res = await fetch(`/api/admin/categories/${postId}`);
-    if (!res.ok) {
-      alert("カテゴリーの取得に失敗しました");
-      return;
+    try {
+      (async () => {
+        const res = await fetch(`/api/admin/categories/${postId}`);
+      if (!res.ok) {
+        alert("カテゴリーの取得に失敗しました");
+        return;
+      }
+      
+      const json = await res.json(); 
+      const data = json.category as Category; 
+        setName((data.name ?? ""));
+      })();
+    } catch (error) {
+      console.error(error);
+      alert("通信エラーが発生しました");
     }
-    
-    const json = await res.json(); 
-    const data = json.category as Category; 
-      setName((data.name ?? ""));
-    })();
   }, [isValidPostId,postId]);
 
-  return (
-    <div className={styles.container}>
-      <h2 className={styles.topLetter}>カテゴリー編集</h2>
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.row}>
-          <label htmlFor="content" className={styles.label}>カテゴリー</label>
-          <textarea
-            id="content"
-            name="content"
-            rows={1}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className={styles.input}
-          />
-        </div>
+return (
+  <div className={styles.container}>
+    <h2 className={styles.topLetter}>カテゴリー編集</h2>
 
-        <div className={styles.updateDelete}>
-          {/* 更新ボタン */}
-          <div className={styles.row}>
-            <button type="submit" className={styles.updataButton}>更新</button>
-          </div>
-
-          {/* 削除ボタン */}
-          <div className={styles.row}>
-            <button onClick={handleDelete} type="button" className={styles.deleteButton}>削除</button>
-          </div>
-        </div>
-      </form>
-    </div>
-  );
+    <CategoryForm
+      name={name}
+      onChangeName={setName}
+      onSubmit={handleSubmit}
+      onDelete={handleDelete}
+      submitLabel="更新"
+      isSubmitting={isSubmitting}
+    />
+  </div>
+);
 }

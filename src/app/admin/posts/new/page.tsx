@@ -1,10 +1,11 @@
 "use client";
-
+import { PostForm } from "../_components/PostForm";
 import { useEffect, useState } from "react";
-import styles from "../../_styles_admin/New.module.css";
+import styles from "./_styles/Posts_New.module.css";
 import { Category } from "../../../_types/Post";
 
 export default function AdminPostsNewPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
@@ -13,6 +14,8 @@ export default function AdminPostsNewPage() {
   const [isOpen, setIsOpen] = useState(false);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return; // 二重送信ガード
+    setIsSubmitting(true); // 送信開始
 
     if (selectedCategoryIds.length === 0) {
       alert("カテゴリーを1つ以上選択してください");
@@ -51,6 +54,8 @@ export default function AdminPostsNewPage() {
     } catch (error) {
       console.error(error);
       alert("通信エラーが発生しました");
+    } finally {
+    setIsSubmitting(false); // 送信終了（成功でも失敗でも）
     }
   };
 
@@ -84,104 +89,25 @@ export default function AdminPostsNewPage() {
 
 
   return (
-    <div className={styles.container}>
-      <h2 className={styles.topLetter}>記事作成</h2>
+      <div className={styles.container}>
+        <h2 className={styles.topLetter}>記事作成</h2>
 
-      <form method="post" className={styles.form} onSubmit={handleSubmit}>
-        {/* タイトル */}
-        <div className={styles.row}>
-          <label htmlFor="title" className={styles.label}>タイトル</label>
-          <input
-            id="title"
-            name="title"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className={styles.input}
-          />
-        </div>
-
-        {/* 内容 */}
-        <div className={styles.row}>
-          <label htmlFor="content" className={styles.label}>内容</label>
-          <textarea
-            id="content"
-            name="content"
-            rows={2}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className={styles.input}
-          />
-        </div>
-
-        {/* サムネイルURL */}
-        <div className={styles.row}>
-          <label htmlFor="thumbnailUrl" className={styles.label}>サムネイルURL</label>
-          <input
-            id="thumbnailUrl"
-            name="thumbnailUrl"
-            type="text"
-            className={styles.input}
-            value={thumbnailUrl}
-            onChange={(e) => setThumbnailUrl(e.target.value)}
-          />
-        </div>
-
-        {/* カテゴリー（画像風：枠の中にチップ＋クリックでON/OFF） */}
-        <div className={styles.row}>
-          <label className={styles.label}>カテゴリー</label>
-
-          <div
-            className={styles.selectBox}
-            onClick={() => setIsOpen((prev) => !prev)}
-          >
-            <div className={styles.chips}>
-              {selectedCategoryIds.length === 0 && (
-                <span className={styles.placeholder}>カテゴリーを選択</span>
-              )}
-
-              {selectedCategoryIds.map((id) => {
-                const category = categories.find((c) => c.id === id);
-                if (!category) return null;
-
-                return (
-                  <span key={id} className={styles.chip}>
-                    {category.name}
-                  </span>
-                );
-              })}
-            </div>
-
-            <span className={styles.arrow}>▼</span>
-          </div>
-
-          {isOpen && (
-            <div className={styles.dropdown}>
-              {categories.map((category) => { //DBからカテゴリを取り出す
-                const selected = selectedCategoryIds.includes(category.id); //選択しているカテゴリの中にDBのカテゴidがあるか真偽
-
-                return (
-                  <div
-                    key={category.id}
-                    className={`${styles.option} ${selected ? styles.optionSelected : ""}`}//選択されているものがDBにもあればstyles.optionSelected を実行
-                    onClick={(e) => {
-                      //e.stopPropagation(); // カテゴリの選択だけ反映させて、枠の開閉クリックを防ぐ
-                      toggleCategory(category.id); // クリックでON/OFF
-                    }}
-                  >
-                    {category.name}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* ボタン */}
-        <div className={styles.row}>
-          <button type="submit" className={styles.button}>作成</button>
-        </div>
-      </form>
-    </div>
+        <PostForm
+          title={title}
+          content={content}
+          thumbnailUrl={thumbnailUrl}
+          categories={categories}
+          selectedCategoryIds={selectedCategoryIds}
+          isOpen={isOpen}
+          setTitle={setTitle}
+          setContent={setContent}
+          setThumbnailUrl={setThumbnailUrl}
+          setIsOpen={setIsOpen}
+          toggleCategory={toggleCategory}
+          onSubmit={handleSubmit}
+          submitLabel="作成"
+          isSubmitting={isSubmitting}
+        />
+      </div>
   );
 }

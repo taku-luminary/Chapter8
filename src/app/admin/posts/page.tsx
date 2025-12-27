@@ -1,6 +1,6 @@
 "use client";
 
-import styles from "../_styles_admin/Admin.module.css";
+import styles from "./_styles/Posts.module.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Post } from "../../_types/Post";

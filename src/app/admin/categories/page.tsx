@@ -1,10 +1,9 @@
 "use client";
 
-import styles from "../_styles_admin/Admin.module.css";
+import styles from "./_styles/Categories.module.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Category } from "../../_types/Post";
-type AdminGet = {createdAt: string };
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]); 

@@ -1,5 +1,5 @@
 
-import styles from "./_styles_admin/Admin.module.css";
+import styles from "./_styles_admin/Layout.module.css";
 import Link from "next/link";
 
 export default function AdminLayout({children,}: {children: React.ReactNode;}) {
