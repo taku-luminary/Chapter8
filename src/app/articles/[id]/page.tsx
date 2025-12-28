@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import styles from "./_styles/ArticleDetail.module.css";
-import { Post, PostResponse } from "../../_types/Post";
+import { Post } from "../../_types/Post";
 import Image from "next/image";
 
 export default function ArticleDetails() {
@@ -11,8 +11,7 @@ export default function ArticleDetails() {
   const [post, setPost] = useState<Post | null>(null);
   const [error, setError] = useState("");
 
-  const { id } = useParams();
-
+  const { id } = useParams<{ id: string }>();
   useEffect(() => {
     if (!id) return;
 
@@ -23,23 +22,21 @@ export default function ArticleDetails() {
 
     const fetcher = async () => {
       try {
-        const res = await fetch(
-          `https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts/${id}`
-        );
-
+        const res = await fetch(`/api/posts/${id}`);
+        console.log(res);
         // 404（存在しない）と、それ以外のエラーを分けて扱う例
         if (res.status === 404) {
           // 見つからない：エラーではなく「0件」という扱いにする
           setPost(null);
           return; // finally で isLoading を false にする
         }
+        console.log(res);
+
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
-        
-        const data = (await res.json()) as PostResponse;
-        const one = data.post
-        setPost(one);
+        const {post} = (await res.json()) as  { post: Post };
+        setPost(post);
       } catch (e) {
         if (e instanceof Error) {
           setError(e.message);
@@ -76,16 +73,16 @@ export default function ArticleDetails() {
 
   return (
     <div className={styles.article}>
-    {post.thumbnailUrl ? ( <Image className={styles.picture} src={post.thumbnailUrl} alt="" width={800} height={400} /> ) : null}
+    {post.thumbnailUrl && ( <Image className={styles.picture} src={post.thumbnailUrl} alt="" width={800} height={400} /> ) }
       <div className={styles.dayCategory}>
         <span>{formatDate(post.createdAt)}</span>
         <div className={styles.categories}>
-         {post.categories.map((category: string, index: number) => (
-            <div  key={index} className={styles.category}>
-              {category}
+          {(post.postCategories ?? []).map((pc) => (
+            <div key={pc.category.id} className={styles.category}>
+              {pc.category.name}
             </div>
-          ))}   
-        </div> 
+          ))}
+        </div>
       </div> 
       <div className={styles.detailContent}>
         <p className={styles.title}>{post.title}</p>

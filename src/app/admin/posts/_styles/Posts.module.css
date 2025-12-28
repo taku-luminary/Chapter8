@@ -1,0 +1,45 @@
+.main{
+  font-weight: bold;
+}
+
+.mainHeader {
+  display: flex;
+  justify-content: space-between; /* 左右に配置 */
+  align-items: center;            /* 縦位置を揃える */
+  margin: 25px 20px 0 20px;       /* 全体の余白 */
+}
+
+.topLetter{
+  font-size:20px;
+}
+
+.newButton{
+  color:white;
+  font-size:17px;
+  background-color:rgb(49, 125, 232);
+  padding:8px 15px;
+  border-radius:5px;
+}
+
+.articleBox{
+  margin:50px 0px 0px 20px;
+  font-size:20px;
+}
+
+.article{
+  margin:20px 0px 0px 20px;
+}
+
+.articleDate{
+  margin:0px 0px 0px 22px;
+  font-size:17px;
+  color:gray;
+  font-weight: normal; 
+}
+
+.border{
+  border-bottom: 1px solid #ddd; 
+  padding-bottom: 4px;
+  margin:10px 0px 0px 0px;
+}
+
