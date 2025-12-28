@@ -52,6 +52,7 @@ export default function AdminEditCategory() {
     } catch (error) {
       console.error(error);
       alert("通信エラーが発生しました");
+
     } finally {
     setIsSubmitting(false); // 送信終了（成功でも失敗でも）
     }
@@ -73,6 +74,7 @@ export default function AdminEditCategory() {
 
       alert("削除しました！");
       router.push("/admin/posts");
+      
     } catch (error) {
       console.error(error);
       alert("通信エラーが発生しました");

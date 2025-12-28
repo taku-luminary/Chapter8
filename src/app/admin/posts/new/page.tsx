@@ -9,7 +9,6 @@ export default function AdminPostsNewPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -59,24 +58,6 @@ export default function AdminPostsNewPage() {
     }
   };
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/admin/categories");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const { categories } = (await res.json()) as {
-          status: string;
-          categories: Category[];
-        };
-
-        setCategories(categories);
-      } catch (error) {
-        console.error(error);
-        alert("カテゴリーの取得に失敗しました");
-      }
-    })();
-  }, []);
 
   const toggleCategory = (categoryId: number) => {
     setSelectedCategoryIds((prev) => {
@@ -96,7 +77,6 @@ export default function AdminPostsNewPage() {
           title={title}
           content={content}
           thumbnailUrl={thumbnailUrl}
-          categories={categories}
           selectedCategoryIds={selectedCategoryIds}
           isOpen={isOpen}
           setTitle={setTitle}

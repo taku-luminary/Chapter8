@@ -44,8 +44,7 @@ export function CategoryForm({
 
         {onDelete && (
           <div className={styles.row}>
-            <button type="button" onClick={onDelete} className={styles.deleteButton} disabled={isSubmitting}
->
+            <button type="button" onClick={onDelete} className={styles.deleteButton} disabled={isSubmitting}>
               削除
             </button>
           </div>

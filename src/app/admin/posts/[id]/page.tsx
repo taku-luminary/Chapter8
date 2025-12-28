@@ -2,7 +2,7 @@
 import { PostForm } from "../_components/PostForm";
 import { useEffect, useState } from "react";
 import styles from "./_styles/Posts_[id].module.css";
-import { Category, Post } from "../../../_types/Post";
+import { Post } from "../../../_types/Post";
 import { useRouter, useParams } from "next/navigation";
 
 export default function AdminEditPage() {
@@ -10,7 +10,6 @@ export default function AdminEditPage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -109,20 +108,6 @@ export default function AdminEditPage() {
     })();
   }, [isValidPostId,postId]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/admin/categories");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setCategories(data.categories);
-      } catch (e) {
-        console.error(e);
-        alert("カテゴリーの取得に失敗しました");
-      }
-    })();
-  }, []);
-
 
   return (
       <div className={styles.container}>
@@ -132,7 +117,6 @@ export default function AdminEditPage() {
       title={title}
       content={content}
       thumbnailUrl={thumbnailUrl}
-      categories={categories}
       selectedCategoryIds={selectedCategoryIds}
       isOpen={isOpen}
       setTitle={setTitle}

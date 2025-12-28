@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Category } from "../../../_types/Post";
 import styles from "./_styles/PostForm.module.css";
 
@@ -8,7 +9,6 @@ type Props = {
   title: string;
   content: string;
   thumbnailUrl: string;
-  categories: Category[];
   selectedCategoryIds: number[];
   isOpen: boolean;
   isSubmitting?: boolean; // ← 追加
@@ -31,7 +31,6 @@ export function PostForm({
   title,
   content,
   thumbnailUrl,
-  categories,
   selectedCategoryIds,
   isOpen,
   setTitle,
@@ -42,9 +41,28 @@ export function PostForm({
   onSubmit,
   submitLabel,
   onDelete,
-  isSubmitting,
   deleteLabel = "削除",
 }: Props) {
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/categories");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setCategories(data.categories ?? []);
+      } catch (e) {
+        console.error(e);
+        alert("カテゴリーの取得に失敗しました");
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
+  }, []);
+
   return (
     <form className={styles.form} onSubmit={onSubmit}>
       {/* タイトル */}
@@ -57,6 +75,7 @@ export function PostForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className={styles.input}
+          disabled={isSubmitting}
         />
       </div>
 
@@ -70,6 +89,7 @@ export function PostForm({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           className={styles.input}
+          disabled={isSubmitting}
         />
       </div>
 
@@ -83,6 +103,7 @@ export function PostForm({
           value={thumbnailUrl}
           onChange={(e) => setThumbnailUrl(e.target.value)}
           className={styles.input}
+          disabled={isSubmitting}
         />
       </div>
 
@@ -92,7 +113,7 @@ export function PostForm({
 
         <div
           className={styles.selectBox}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() =>{    if (isSubmitting) return; setIsOpen(!isOpen)}}  
         >
           <div className={styles.chips}>
             {selectedCategoryIds.length === 0 && (
