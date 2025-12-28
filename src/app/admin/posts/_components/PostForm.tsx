@@ -46,7 +46,7 @@ export function PostForm({
 }: Props) {
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(false); 
 
 useEffect(() => {
   (async () => {
