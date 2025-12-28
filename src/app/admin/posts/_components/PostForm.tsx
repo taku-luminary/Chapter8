@@ -11,7 +11,7 @@ type Props = {
   thumbnailUrl: string;
   selectedCategoryIds: number[];
   isOpen: boolean;
-  isSubmitting?: boolean; // ← 追加
+  isSubmitting: boolean; 
 
 
   setTitle: (v: string) => void;
@@ -32,6 +32,7 @@ export function PostForm({
   content,
   thumbnailUrl,
   selectedCategoryIds,
+  isSubmitting,
   isOpen,
   setTitle,
   setContent,
@@ -45,23 +46,24 @@ export function PostForm({
 }: Props) {
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); 
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/admin/categories");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setCategories(data.categories ?? []);
-      } catch (e) {
-        console.error(e);
-        alert("カテゴリーの取得に失敗しました");
-      } finally {
-        setIsSubmitting(false);
-      }
-    })();
-  }, []);
+useEffect(() => {
+  (async () => {
+    try {
+      const res = await fetch("/api/admin/categories");
+      setIsLoading(true);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setCategories(data.categories ?? []);
+    } catch (e) {
+      console.error(e);
+      alert("カテゴリーの取得に失敗しました");
+    } finally {
+      setIsLoading(false);
+    }
+  })();
+}, []);
 
   return (
     <form className={styles.form} onSubmit={onSubmit}>
@@ -113,7 +115,8 @@ export function PostForm({
 
         <div
           className={styles.selectBox}
-          onClick={() =>{    if (isSubmitting) return; setIsOpen(!isOpen)}}  
+          onClick={() =>{ if (isSubmitting || isLoading) return;
+           setIsOpen(!isOpen)}}  
         >
           <div className={styles.chips}>
             {selectedCategoryIds.length === 0 && (
@@ -134,7 +137,7 @@ export function PostForm({
           <span className={styles.arrow}>▼</span>
         </div>
 
-        {isOpen && (
+        {isOpen && !isLoading && (
           <div className={styles.dropdown}>
             {categories.map((category) => {
               const selected = selectedCategoryIds.includes(category.id);

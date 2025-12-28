@@ -14,12 +14,13 @@ export default function AdminPostsNewPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmitting) return; // 二重送信ガード
-    setIsSubmitting(true); // 送信開始
 
     if (selectedCategoryIds.length === 0) {
       alert("カテゴリーを1つ以上選択してください");
       return;
     }
+
+    setIsSubmitting(true); // 送信開始
 
     try {
       const body = {

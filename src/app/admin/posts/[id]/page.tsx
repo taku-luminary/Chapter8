@@ -27,11 +27,13 @@ export default function AdminEditPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isSubmitting) return; // 二重送信ガード
-    setIsSubmitting(true); // 送信開始
+
     if (selectedCategoryIds.length === 0) {
       alert("カテゴリーを1つ以上選択してください");
       return;
     }
+
+    setIsSubmitting(true); // 送信開始
 
     try {
       const body = {
@@ -54,7 +56,7 @@ export default function AdminEditPage() {
       }
 
       const data = await res.json();
-      alert(`記事を更新しました！（id: ${data.id}）`);
+      alert(`記事を更新しました！（id: ${data.post.id}）`);
 
     } catch (error) {
       console.error(error);
