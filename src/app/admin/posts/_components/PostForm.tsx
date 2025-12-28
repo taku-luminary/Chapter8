@@ -51,8 +51,8 @@ export function PostForm({
 useEffect(() => {
   (async () => {
     try {
-      const res = await fetch("/api/admin/categories");
       setIsLoading(true);
+      const res = await fetch("/api/admin/categories");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setCategories(data.categories ?? []);
