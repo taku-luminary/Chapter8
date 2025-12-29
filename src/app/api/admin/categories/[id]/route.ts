@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { UpdateCategoryRequestBody } from '@/app/_types/Category'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/app/_libs/prisma'
 
 export const GET = async (
   request: NextRequest,

@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/app/_libs/prisma'
 import { NextRequest, NextResponse } from 'next/server'
-
-const prisma = new PrismaClient()
 
 //管理者_記事詳細取得API
 export const GET = async (request: NextRequest) => {
