@@ -1,58 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Category } from "../../../_types/Post";
 import styles from "./_styles/PostForm.module.css";
-
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 type Props = {
+  handleImageChange: (event: ChangeEvent<HTMLInputElement>) => void;
   title: string;
   content: string;
-  thumbnailUrl: string;
   selectedCategoryIds: number[];
   isOpen: boolean;
   isSubmitting: boolean; 
-
-
   setTitle: (v: string) => void;
   setContent: (v: string) => void;
-  setThumbnailUrl: (v: string) => void;
   setIsOpen: (v: boolean) => void;
   toggleCategory: (categoryId: number) => void;
-
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   submitLabel: string;
-
   onDelete?: () => void; // 編集ページだけ渡す
   deleteLabel?: string;
 };
 
 export function PostForm({
+  handleImageChange,
   title,
   content,
-  thumbnailUrl,
   selectedCategoryIds,
   isSubmitting,
   isOpen,
   setTitle,
   setContent,
-  setThumbnailUrl,
   setIsOpen,
   toggleCategory,
   onSubmit,
-  submitLabel,
   onDelete,
+  submitLabel,
   deleteLabel = "削除",
 }: Props) {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false); 
+  const { token, sessionLoading } = useSupabaseSession()  
+  
 
 useEffect(() => {
+      if (!token) return
   (async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/admin/categories");
+      const res = await fetch("/api/admin/categories",{
+      headers: {Authorization: token }});
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setCategories(data.categories ?? []);
@@ -63,7 +61,7 @@ useEffect(() => {
       setIsLoading(false);
     }
   })();
-}, []);
+}, [token, sessionLoading]);
 
   return (
     <form className={styles.form} onSubmit={onSubmit}>
@@ -95,15 +93,14 @@ useEffect(() => {
         />
       </div>
 
-      {/* サムネイルURL */}
+      {/* サムネイル画像 */}
       <div className={styles.row}>
-        <label htmlFor="thumbnailUrl" className={styles.label}>サムネイルURL</label>
+        <label htmlFor="thumbnailImageKey" className={styles.label}>サムネイル画像</label>
         <input
-          id="thumbnailUrl"
-          name="thumbnailUrl"
-          type="text"
-          value={thumbnailUrl}
-          onChange={(e) => setThumbnailUrl(e.target.value)}
+          id="thumbnailImageKey"
+          type="file"
+          onChange={handleImageChange}
+          accept="image/*"
           className={styles.input}
           disabled={isSubmitting}
         />

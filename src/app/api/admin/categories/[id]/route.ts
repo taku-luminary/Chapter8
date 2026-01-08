@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { UpdateCategoryRequestBody } from '@/app/_types/Category'
 import { prisma } from '@/app/_libs/prisma'
+import { supabase } from '@/utils/supabase'
 
 export const GET = async (
   request: NextRequest,
@@ -12,6 +13,16 @@ export const GET = async (
   //③: { params: { id: string } }の意味
   // これは{params}の型注釈。{params}の中にオブジェクトがあり、そこにはstring型を持つidキーがあると定義
 ) => {
+    const token = request.headers.get('Authorization') ?? ''
+  
+    // supabaseに対してtokenを送る
+    const { error } = await supabase.auth.getUser(token)
+  
+    // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+    if (error)
+      return NextResponse.json({ status: error.message }, { status: 401 })
+  
+    // tokenが正しい場合、以降が実行される
   const { id } = params
 
   try {
@@ -33,6 +44,17 @@ export const PUT = async (
   request: NextRequest,
   { params }: { params: { id: string } }, // ここでリクエストパラメータを受け取る
 ) => {
+  const token = request.headers.get('Authorization') ?? ''
+
+  // supabaseに対してtokenを送る
+  const { error } = await supabase.auth.getUser(token)
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 401 })
+
+  // tokenが正しい場合、以降が実行される
+
   // paramsの中にidが入っているので、それを取り出す
   const { id } = params
 
@@ -63,6 +85,17 @@ export const DELETE = async (
   request: NextRequest,
   { params }: { params: { id: string } }, // ここでリクエストパラメータを受け取る
 ) => {
+  const token = request.headers.get('Authorization') ?? ''
+
+  // supabaseに対してtokenを送る
+  const { error } = await supabase.auth.getUser(token)
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 401 })
+
+  // tokenが正しい場合、以降が実行される
+
   // paramsの中にidが入っているので、それを取り出す
   const { id } = params
 

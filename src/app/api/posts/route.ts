@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/app/_libs/prisma'
 
 // GETという命名にすることで、GETリクエストの時にこの関数が呼ばれる
 export const GET = async (
-  request: NextRequest) => {
+  ) => {
   try {
     // Postの一覧をDBから取得
     const posts = await prisma.post.findMany({

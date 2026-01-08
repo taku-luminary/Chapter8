@@ -3,7 +3,7 @@
 import styles from "./_styles/Posts.module.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Post } from "../../_types/Post";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 
 type AdminPost = { id: number; title?: string; createdAt: string };
 
@@ -18,35 +18,49 @@ export default function AdminPostsPage() {
   const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("ja-JP", { year: "numeric", month: "numeric", day: "numeric" });
 
+const { token, sessionLoading } = useSupabaseSession()
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const res = await fetch('/api/admin/posts');
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const {data} = (await res.json()) as { data: Post[] };
-        setPosts(data);
-      } catch (e) {
-        if (e instanceof Error) {
-            setError(e.message);
-          } else {
-            setError("一覧の取得に失敗しました");
-          }
-        setPosts([]);
-      } finally {
-        setIsLoading(false);
+useEffect(() => {
+  // Supabaseのセッション取得が終わるまで待つ
+  if (sessionLoading) return
+
+  // 未ログインなら（ここは好みで）ログインへ飛ばす or エラー表示
+  if (!token) {
+    setIsLoading(false)
+    setError("ログインが必要です")
+    return
+  }
+
+  ;(async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+
+      const res = await fetch("/api/admin/posts", {
+        headers: {
+          Authorization: token,
+        },
+      })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        // APIが返したメッセージ（getUserのerror.message）も拾う
+        throw new Error(json?.status ?? `HTTP ${res.status}`)
       }
-    })();
-  }, []);
+      setPosts(json.data ?? [])
+    } catch (e) {
+      setPosts([])
+      setError(e instanceof Error ? e.message : "一覧の取得に失敗しました")
+    } finally {
+      setIsLoading(false)
+    }
+  })()
+}, [token, sessionLoading])
+
 
   // ① 読み込み中
-  if (isLoading) {
-    return <p className={styles.loading}>読み込み中...</p>;
-  }
+if (sessionLoading || isLoading) {
+  return <p className={styles.loading}>読み込み中...</p>
+}
 
   // ② エラー
   if (error) {
@@ -59,26 +73,29 @@ export default function AdminPostsPage() {
     );
   }
 
-  // ③ 空（0件）
-  if (posts.length === 0) {
-    return <p>記事がありません。</p>;
-  }
-
   return ( 
   <>
     {/* 右側のメイン */}
     <main className={styles.main}>
       <div className={styles.mainHeader}>
         <h2 className={styles.topLetter}>記事一覧 </h2>
-        <Link href ="/admin/posts/new" className={styles.newButton}>新規作成</Link>
-      </div>
-        {posts.map((p) => (
-          <Link href ={`/admin/posts//${p.id}`} className={styles.articleBox} key={p.id}>
+        <Link href="/admin/posts/new" className={styles.newButton}>新規作成</Link>
+      </div>  
+      {posts.length === 0 ? (
+        <p>記事がありません。</p>
+      ) : (
+        posts.map((p) => (
+          <Link
+            href={`/admin/posts/${p.id}`}
+            className={styles.articleBox}
+            key={p.id}
+          >
             <div className={styles.article}>{p.title}</div>
             <div className={styles.articleDate}>{formatDate(p.createdAt)}</div>
             <div className={styles.border}></div>
           </Link>
-        ))}
+        ))
+      )}
     </main>
   </>
   );

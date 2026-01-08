@@ -1,24 +1,22 @@
 generator client {
- provider   = "prisma-client"
- output     = "../src/generated/prisma"
- engineType = "client"
+  provider   = "prisma-client"
+  output   = "../generated/prisma"
 }
 
- datasource db {
+datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
- }
+}
 
 
 // ブログ記事テーブル
 model Post {
-  id             Int            @id @default(autoincrement())
-  title          String
-  content        String
-  thumbnailUrl   String
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  postCategories PostCategory[]
+  id                Int            @id @default(autoincrement())
+  title             String
+  content           String
+  thumbnailImageKey String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  postCategories    PostCategory[]
 }
 
 // カテゴリーテーブル

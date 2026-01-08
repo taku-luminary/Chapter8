@@ -1,16 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/_libs/prisma'
+import { supabase } from '@/utils/supabase'
 
-export const GET = async (
-  request: NextRequest,
+export const GET = async (request: NextRequest,
   { params }: { params: { id: string } },
   //①全体の意味
-  // 第2引数として渡ってくるオブジェクトから、params だけを取り出して、その形（型）を TypeScript に教えている
+  // Next.js の Route Handler では、第2引数に「URL 由来の情報（context）」が入り、その中の params を分割代入で取り出し、型注釈で id が string であることを TypeScript に教えている
   //②{ params }の意味
   // (request: NextRequest, { params }: { params: { id: string } })において、第2引数は APIで通信で受け取る/api/admin/posts/${postId}など“コンテキスト” であり、その中に params が入っている。この2つ目の引数の中にある params オブジェクト（プロパティ）だけ抽出
   //③: { params: { id: string } }の意味
-  // これは{params}の型注釈。{params}の中にオブジェクトがあり、そこにはstring型を持つidキーがあると定義
+  // これは{params}の型注釈。paramsはオブジェクトの中に入っており、さららにその中オブジェクトがあり、そこにはstring型を持つidキーがあると定義
 ) => {
+    const token = request.headers.get('Authorization') ?? ''
+  
+    // supabaseに対してtokenを送る
+    const { error } = await supabase.auth.getUser(token)
+  
+    // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+    if (error)
+      return NextResponse.json({ status: error.message }, { status: 401 })
+  
+    // tokenが正しい場合、以降が実行される
+    
   const { id } = params
 
   try {
@@ -41,7 +52,7 @@ interface UpdatePostRequestBody {
   title: string
   content: string
   categories: { id: number }[]
-  thumbnailUrl: string
+  thumbnailImageKey: string
 }
 
 // PUTという命名にすることで、PUTリクエストの時にこの関数が呼ばれる
@@ -50,10 +61,22 @@ export const PUT = async (
   { params }: { params: { id: string } }, // ここでリクエストパラメータを受け取る
 ) => {
   // paramsの中にidが入っているので、それを取り出す
+
+    const token = request.headers.get('Authorization') ?? ''
+
+	// supabaseに対してtokenを送る
+  const { error } = await supabase.auth.getUser(token)
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 401 })
+
+  // tokenが正しい場合、以降が実行される
+
   const { id } = params
 
   // リクエストのbodyを取得
-  const { title, content, categories, thumbnailUrl }: UpdatePostRequestBody = await request.json()
+  const { title, content, categories, thumbnailImageKey }: UpdatePostRequestBody = await request.json()
 
   try {
     // idを指定して、Postを更新
@@ -64,7 +87,7 @@ export const PUT = async (
       data: {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       },
     })
 
@@ -100,6 +123,17 @@ export const DELETE = async (
   { params }: { params: { id: string } }, // ここでリクエストパラメータを受け取る
 ) => {
   // paramsの中にidが入っているので、それを取り出す
+
+    const token = request.headers.get('Authorization') ?? ''
+
+	// supabaseに対してtokenを送る
+  const { error } = await supabase.auth.getUser(token)
+
+  // 送ったtokenが正しくない場合、errorが返却されるので、クライアントにもエラーを返す
+  if (error)
+    return NextResponse.json({ status: error.message }, { status: 401 })
+
+  // tokenが正しい場合、以降が実行される
   const { id } = params
 
   try {

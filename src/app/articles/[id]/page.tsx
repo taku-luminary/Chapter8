@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import styles from "./_styles/ArticleDetail.module.css";
 import { Post } from "../../_types/Post";
 import Image from "next/image";
+import { supabase } from "@/utils/supabase";
 
 export default function ArticleDetails() {
   const [isLoading, setIsLoading] = useState(true); 
   const [post, setPost] = useState<Post | null>(null);
   const [error, setError] = useState("");
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<null | string>(null,)  
 
   const { id } = useParams<{ id: string }>();
   useEffect(() => {
@@ -56,6 +58,24 @@ export default function ArticleDetails() {
   const formatDate = (iso : string) =>
     new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' });
 
+
+  useEffect(() => {
+    if (!post?.thumbnailImageKey) return
+
+// アップロード時に取得した、thumbnailImageKeyを用いて画像のURLを取得
+    const fetcher = async () => {
+      const {
+        data: { publicUrl },
+      } = await supabase.storage
+        .from('post_thumbnail')
+        .getPublicUrl(post?.thumbnailImageKey)
+
+      setThumbnailImageUrl(publicUrl)
+    }
+
+    fetcher()
+  }, [post?.thumbnailImageKey])
+  
   // ① 読み込み中
   if (isLoading) {
     return <p>読み込み中...</p>;
@@ -70,10 +90,19 @@ export default function ArticleDetails() {
   if (!post) {
     return <p>記事が見つかりませんでした。</p>;
   }
-
+// 画像の表示
   return (
     <div className={styles.article}>
-    {post.thumbnailUrl && ( <Image className={styles.picture} src={post.thumbnailUrl} alt="" width={800} height={400} /> ) }
+      {thumbnailImageUrl && (
+        <div className="mt-2">
+        <Image src={thumbnailImageUrl}
+          alt="thumbnail"
+          width={400}
+          height={400}
+        />
+        </div>
+      )}
+
       <div className={styles.dayCategory}>
         <span>{formatDate(post.createdAt)}</span>
         <div className={styles.categories}>
@@ -89,5 +118,7 @@ export default function ArticleDetails() {
         <div dangerouslySetInnerHTML={{ __html: post.content }} />
       </div>
     </div>
+
+    
   );
 }
