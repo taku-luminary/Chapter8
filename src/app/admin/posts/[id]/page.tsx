@@ -2,18 +2,14 @@
 import { PostForm } from "../_components/PostForm";
 import { ChangeEvent, useEffect, useState } from "react";
 import styles from "./_styles/Posts_[id].module.css";
-import { Post } from "../../../_types/Post";
+import { Post, PostFormInputs } from "../../../_types/Post";
 import { useRouter, useParams } from "next/navigation";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { supabase } from '@/utils/supabase'
 import { v4 as uuidv4 } from 'uuid'  // 固有IDを生成するライブラリ
+import { SubmitHandler, useForm } from "react-hook-form";
 
 export default function AdminEditPage() {
-  const [thumbnailImageKey, setThumbnailImageKey] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const params = useParams();
@@ -21,6 +17,10 @@ export default function AdminEditPage() {
   const { token, sessionLoading } = useSupabaseSession()  
   const postId = typeof idParam === "string" ? Number(idParam) : NaN;  // 1) idがstringのときだけ数値化
   const isValidPostId = Number.isFinite(postId) && postId > 0; // 2) 有効判定（NaNじゃない、かつ 1以上）
+  const { register,handleSubmit, watch,formState: { errors , isSubmitting},setValue} = useForm<PostFormInputs>({
+    defaultValues: {title:"",content:"",thumbnailImageKey:"",categories:[]}
+  })
+  const selectedCategoryIds = watch("categories")
   const handleImageChange = async (
     event: ChangeEvent<HTMLInputElement>,
   ): Promise<void> => {
@@ -48,27 +48,34 @@ export default function AdminEditPage() {
     }
 
     // data.pathに、画像固有のkeyが入っているので、thumbnailImageKeyに格納する
-    setThumbnailImageKey(data.path)
+    setValue("thumbnailImageKey", data.path)
   }
 
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  //・onSubmit は、RHF によって集められた data を受け取るためにユーザーが定義した関数である。
+  //・data を集める処理自体は、この関数の中には存在しない。
+  //PostForm.tsxの<form onSubmit={handleSubmit(onSubmit)}>
+  //・ここで使われている handleSubmit は react-hook-form が提供する関数。
+  //・RHF の handleSubmit は、以下のような submit 用の関数を内部で生成する。
+  // const submitHandler = async (event) => {
+  // event.preventDefault();
+  // const data = getValuesFromRHFStore();  内部ストアから値を集めて data を生成する
+  // await onSubmit(data);};  handleSubmit(onSubmit) と書いた通り、引数として渡された onSubmit に data を渡して実行する
+  //・つまり、data を集めているのは RHF の handleSubmit
+  //・onSubmit は、集められた data を受け取るだけの関数
+  const onSubmit: SubmitHandler<PostFormInputs> = async (data) => {
     if (isSubmitting) return; // 二重送信ガード
     if (!token) return
-    if (selectedCategoryIds.length === 0) {
+    if (data.categories.length === 0) {
       alert("カテゴリーを1つ以上選択してください");
       return;
     }
-
-    setIsSubmitting(true); // 送信開始
     
     try {
       const body = {
-        title,
-        content,
-        thumbnailImageKey,
-        categories: selectedCategoryIds.map((id) => ({ id })), 
+        title:data.title,
+        content:data.content,
+        thumbnailImageKey:data.thumbnailImageKey,
+        categories: data.categories.map((id) => ({ id })), 
       };
 
       const res = await fetch(`/api/admin/posts/${postId}`, {
@@ -77,21 +84,17 @@ export default function AdminEditPage() {
         body: JSON.stringify(body),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        alert(`エラーが発生しました: ${data.status ?? "不明なエラー"}`);
+        const errorJson = await res.json();
+      
+        if (!res.ok) {
+        alert(`エラーが発生しました: ${errorJson.status ?? "不明なエラー"}`);
         return;
       }
-
-      const data = await res.json();
-      alert(`記事を更新しました！（id: ${data.post.id}）`);
-
+      alert(`記事を更新しました！（id: ${errorJson.post.id}）`);
     } catch (error) {
       console.error(error);
       alert("通信エラーが発生しました");
-    } finally {
-    setIsSubmitting(false); // 送信終了（成功でも失敗でも）
-    }
+    } 
   };
 
   const handleDelete = async () => {
@@ -114,12 +117,17 @@ export default function AdminEditPage() {
   };
 
   const toggleCategory = (categoryId: number) => {
-    setSelectedCategoryIds((prev) => {
-      if (prev.includes(categoryId)) {
-        return prev.filter((id) => id !== categoryId); // 解除
-      }
-      return [...prev, categoryId]; // 追加
-    });
+    if (selectedCategoryIds.includes(categoryId)) {
+      setValue(
+        "categories",
+        selectedCategoryIds.filter((id) => id !== categoryId)
+      );
+    } else {
+      setValue(
+        "categories",
+        [...selectedCategoryIds, categoryId]
+      );
+    }
   };
 
   useEffect(() => {
@@ -136,14 +144,17 @@ export default function AdminEditPage() {
   }
   
   const json = await res.json(); // { status: "OK", post: {...} }
-  const data = json.post as Post; // ← ここが重要（postを取り出す）
+  const post = json.post as Post;
 
-    setTitle(data.title ?? "");
-    setContent(data.content ?? "");
-    setThumbnailImageKey(data.thumbnailImageKey ?? "");
-    setSelectedCategoryIds((data.postCategories ?? []).map((c) => c.category.id));
-  })();
-}, [sessionLoading, isValidPostId, postId, token]);
+  setValue("title", post.title ?? "");
+  setValue("content", post.content ?? "");
+  setValue("thumbnailImageKey", post.thumbnailImageKey ?? "");
+  setValue(
+    "categories",
+    (post.postCategories ?? []).map((c) => c.category.id)
+  );
+    })();
+    }, [sessionLoading, token, isValidPostId, postId, setValue]); 
 
 if (sessionLoading) return <p>読み込み中...</p>
 
@@ -165,18 +176,16 @@ return (
 
     <PostForm
       handleImageChange={handleImageChange}
-      title={title}
-      content={content}
-      selectedCategoryIds={selectedCategoryIds}
       isOpen={isOpen}
-      setTitle={setTitle}
-      setContent={setContent}
       setIsOpen={setIsOpen}
       toggleCategory={toggleCategory}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
       submitLabel="更新"
       onDelete={handleDelete}
       isSubmitting={isSubmitting}
+      register={register}
+      handleSubmit={handleSubmit}
+      selectedCategoryIds={selectedCategoryIds}
     />
   </div>
 );

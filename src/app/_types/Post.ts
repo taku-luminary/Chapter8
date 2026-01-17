@@ -15,3 +15,11 @@ export type Post = {
   categories: Category[];
   postCategories: { category: { id: number; name: string } }[]
 };
+
+
+export type PostFormInputs = {
+  title: string
+  content: string
+  thumbnailImageKey: string
+  categories:number[]
+}
