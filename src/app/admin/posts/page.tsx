@@ -4,57 +4,52 @@ import styles from "./_styles/Posts.module.css";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import useSWR from "swr";
 
 type AdminPost = { id: number; title?: string; createdAt: string };
 
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("ja-JP", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
 
-export default function AdminPostsPage() {
-  const [posts, setPosts] = useState<AdminPost[]>([]); 
-  const [isLoading, setIsLoading] = useState(false);   
-  const [error, setError] = useState<string|null>(null);  
 
+const fetcher = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, {
+    headers: {
+     Authorization: token
+    },
+  });
 
-    // 日付整形の小関数（ファイル上部に追記）
-  const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("ja-JP", { year: "numeric", month: "numeric", day: "numeric" });
+  const json = await res.json().catch(() => null);
 
-const { token, sessionLoading } = useSupabaseSession()
-
-useEffect(() => {
-  // Supabaseのセッション取得が終わるまで待つ
-  if (sessionLoading) return
-
-  // 未ログインなら（ここは好みで）ログインへ飛ばす or エラー表示
-  if (!token) {
-    setIsLoading(false)
-    setError("ログインが必要です")
-    return
+  if (!res.ok) {
+    // APIが返す message/status があるならそれを優先
+    throw new Error(json?.status ?? `HTTP ${res.status}`);
   }
 
-  ;(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
+  // APIの形が { data: [...] } 前提
+  return (json?.data ?? []) as AdminPost[];
+};
 
-      const res = await fetch("/api/admin/posts", {
-        headers: {
-          Authorization: token,
-        },
-      })
-      const json = await res.json().catch(() => null)
-      if (!res.ok) {
-        // APIが返したメッセージ（getUserのerror.message）も拾う
-        throw new Error(json?.status ?? `HTTP ${res.status}`)
-      }
-      setPosts(json.data ?? [])
-    } catch (e) {
-      setPosts([])
-      setError(e instanceof Error ? e.message : "一覧の取得に失敗しました")
-    } finally {
-      setIsLoading(false)
-    }
-  })()
-}, [token, sessionLoading])
+
+export default function AdminPostsPage() {
+
+   const { token, sessionLoading } = useSupabaseSession()
+
+  //  token が無い / sessionLoading 中は “取得しない”
+  // key が null だと SWR は fetcher を呼ばない
+  const swrKey = !sessionLoading && token ? (["/api/admin/posts", token] as const) : null;
+
+  const {
+    data: posts,
+    error,
+    isLoading,
+    mutate, // 手動リトライで使う
+  } = useSWR(swrKey, fetcher);
+
 
 
   // ① 読み込み中
@@ -73,6 +68,8 @@ if (sessionLoading || isLoading) {
     );
   }
 
+  const safePosts = posts ?? [];
+
   return ( 
   <>
     {/* 右側のメイン */}
@@ -81,10 +78,10 @@ if (sessionLoading || isLoading) {
         <h2 className={styles.topLetter}>記事一覧 </h2>
         <Link href="/admin/posts/new" className={styles.newButton}>新規作成</Link>
       </div>  
-      {posts.length === 0 ? (
+      {safePosts.length === 0 ? (
         <p>記事がありません。</p>
       ) : (
-        posts.map((p) => (
+        safePosts.map((p) => (
           <Link
             href={`/admin/posts/${p.id}`}
             className={styles.articleBox}

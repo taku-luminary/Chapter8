@@ -8,6 +8,20 @@ import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { supabase } from '@/utils/supabase'
 import { v4 as uuidv4 } from 'uuid'  // 固有IDを生成するライブラリ
 import { SubmitHandler, useForm } from "react-hook-form";
+import useSWR from "swr";
+
+type GetPostResponse = { status: string; post: Post };
+
+const fetcherWithToken = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, { headers: { Authorization: token } });
+  const json = (await res.json()) as GetPostResponse;
+
+  if (!res.ok) {
+    // ここはAPIの返し方に合わせて調整
+    throw new Error(json?.status ?? "記事の取得に失敗しました");
+  }
+  return json;
+};
 
 export default function AdminEditPage() {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,10 +31,33 @@ export default function AdminEditPage() {
   const { token, sessionLoading } = useSupabaseSession()  
   const postId = typeof idParam === "string" ? Number(idParam) : NaN;  // 1) idがstringのときだけ数値化
   const isValidPostId = Number.isFinite(postId) && postId > 0; // 2) 有効判定（NaNじゃない、かつ 1以上）
-  const { register,handleSubmit, watch,formState: { errors , isSubmitting},setValue} = useForm<PostFormInputs>({
+
+  const { register,handleSubmit, watch,formState: { errors , isSubmitting},setValue,reset} = useForm<PostFormInputs>({
     defaultValues: {title:"",content:"",thumbnailImageKey:"",categories:[]}
   })
   const selectedCategoryIds = watch("categories")
+
+    //  token と postId が揃ったらだけ取得
+  const swrKey = !sessionLoading && token && isValidPostId
+    ? [`/api/admin/posts/${postId}`, token] as const
+    : null;
+
+const { data: swrData, error: swrError, isLoading, mutate } = useSWR(swrKey, fetcherWithToken);
+
+    //  取得できたらフォームに一括反映（setValue連打より安全）
+  useEffect(() => {
+    const post = swrData?.post;
+    if (!post) return;
+
+    reset({
+      title: post.title ?? "",
+      content: post.content ?? "",
+      thumbnailImageKey: post.thumbnailImageKey ?? "",
+      categories: (post.postCategories ?? []).map((c) => c.category.id),
+    });
+  }, [swrData, reset]);
+
+
   const handleImageChange = async (
     event: ChangeEvent<HTMLInputElement>,
   ): Promise<void> => {
@@ -34,7 +71,7 @@ export default function AdminEditPage() {
     const filePath = `private/${uuidv4()}` // ファイルパスを指定
 
     // Supabaseに画像をアップロード
-    const { data, error } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('post_thumbnail')// ここでバケット名を指定
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -42,13 +79,13 @@ export default function AdminEditPage() {
       })
 
     // アップロードに失敗したらエラーを表示して終了
-    if (error) {
-      alert(error.message)
+    if (uploadError) {
+      alert(uploadError.message)
       return
     }
 
     // data.pathに、画像固有のkeyが入っているので、thumbnailImageKeyに格納する
-    setValue("thumbnailImageKey", data.path)
+    setValue("thumbnailImageKey", uploadData.path)
   }
 
   //・onSubmit は、RHF によって集められた data を受け取るためにユーザーが定義した関数である。
@@ -84,13 +121,16 @@ export default function AdminEditPage() {
         body: JSON.stringify(body),
       });
 
-        const errorJson = await res.json();
-      
-        if (!res.ok) {
-        alert(`エラーが発生しました: ${errorJson.status ?? "不明なエラー"}`);
+      const json = await res.json();
+      if (!res.ok) {
+        alert(`エラーが発生しました: ${json.status ?? "不明なエラー"}`);
         return;
       }
-      alert(`記事を更新しました！（id: ${errorJson.post.id}）`);
+
+      alert(`記事を更新しました！（id: ${json.post.id}）`);
+
+      //  更新後に最新を再取得
+      mutate();
     } catch (error) {
       console.error(error);
       alert("通信エラーが発生しました");
@@ -130,63 +170,44 @@ export default function AdminEditPage() {
     }
   };
 
-  useEffect(() => {
-  if (sessionLoading) return
-  if (!token) return
-  if (!isValidPostId) return 
-    (async () => {
-      const res = await fetch(`/api/admin/posts/${postId}`,{
-      headers: {Authorization: token },
-    });
-    if (!res.ok) {
-      alert("記事の取得に失敗しました");
-      return;
+
+  //  SWRのローディング/エラー
+  if (sessionLoading) return <p>読み込み中...</p>
+  if (!token) {
+    return <p>ログインが必要です</p> // or router.replace('/login')
   }
-  
-  const json = await res.json(); // { status: "OK", post: {...} }
-  const post = json.post as Post;
 
-  setValue("title", post.title ?? "");
-  setValue("content", post.content ?? "");
-  setValue("thumbnailImageKey", post.thumbnailImageKey ?? "");
-  setValue(
-    "categories",
-    (post.postCategories ?? []).map((c) => c.category.id)
-  );
-    })();
-    }, [sessionLoading, token, isValidPostId, postId, setValue]); 
+  if (!isValidPostId) {
+    return (
+      <div className={styles.container}>
+        <p>URLのIDが不正です（id: {String(idParam)}）</p>
+      </div>
+    );
+  }
 
-if (sessionLoading) return <p>読み込み中...</p>
+  // SWRの状態チェック
+  if (isLoading) return <p>記事を読み込み中...</p>;
+  if (swrError) {
+    return <p>記事の取得に失敗しました: {swrError instanceof Error ? swrError.message : String(swrError)}</p>;
+  }
 
-if (!token) {
-  return <p>ログインが必要です</p> // or router.replace('/login')
-}
-
-if (!isValidPostId) {
   return (
     <div className={styles.container}>
-      <p>URLのIDが不正です（id: {String(idParam)}）</p>
+      <h2 className={styles.topLetter}>記事編集</h2>
+
+      <PostForm
+        handleImageChange={handleImageChange}
+        isOpen={isOpen}
+        setIsOpen={setIsOpen}
+        toggleCategory={toggleCategory}
+        onSubmit={onSubmit}
+        submitLabel="更新"
+        onDelete={handleDelete}
+        isSubmitting={isSubmitting}
+        register={register}
+        handleSubmit={handleSubmit}
+        selectedCategoryIds={selectedCategoryIds}
+      />
     </div>
   );
-}
-
-return (
-  <div className={styles.container}>
-    <h2 className={styles.topLetter}>記事編集</h2>
-
-    <PostForm
-      handleImageChange={handleImageChange}
-      isOpen={isOpen}
-      setIsOpen={setIsOpen}
-      toggleCategory={toggleCategory}
-      onSubmit={onSubmit}
-      submitLabel="更新"
-      onDelete={handleDelete}
-      isSubmitting={isSubmitting}
-      register={register}
-      handleSubmit={handleSubmit}
-      selectedCategoryIds={selectedCategoryIds}
-    />
-  </div>
-);
 }

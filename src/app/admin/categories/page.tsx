@@ -2,37 +2,33 @@
 
 import styles from "./_styles/Categories.module.css";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Category } from "../../_types/Post";
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import useSWR from "swr";
+
+type CategoriesResponse = { status: string; categories: Category[] };
+
+const fetcher = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, { headers: { Authorization: token } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as CategoriesResponse;
+};
 
 
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]); 
-  const { token, sessionLoading } = useSupabaseSession()  
+  const { token, sessionLoading } = useSupabaseSession();
 
+  const key =
+    sessionLoading || !token ? null : (["/api/admin/categories", token] as const);
 
-  useEffect(() => {
-  if (sessionLoading) return
-  if (!token) return
-    (async () => {
-      try {
-        const res = await fetch('/api/admin/categories',  {headers: { Authorization: token },});
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const {categories} = (await res.json()) as {status: string; categories: Category[];};
-        setCategories(categories);
-      } catch (e) {
-        console.error(e)
-        alert("カテゴリーの取得に失敗しました")
-      }
-    })();
-  }, [sessionLoading, token]);
+  const { data, error, isLoading } = useSWR(key, fetcher);
 
-if (sessionLoading) return <p>読み込み中...</p>
-if (!token) return <p>ログインが必要です</p>
+  if (sessionLoading) return <p>読み込み中...</p>;
+  if (!token) return <p>ログインが必要です</p>;
+  if (isLoading) return <p>読み込み中...</p>;
+  if (error) return <p>カテゴリーの取得に失敗しました</p>;
 
+  const categories = data?.categories ?? [];
   return(
   <>
     <main className={styles.main}>
