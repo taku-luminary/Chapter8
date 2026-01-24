@@ -7,6 +7,20 @@ import { useRouter, useParams } from "next/navigation";
 import { CategoryForm } from "../../_components/CategoryForm";
 import { UpdateCategoryRequestBody,CategoryApiResponse } from '@/app/_types/Category'
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import useSWR from "swr";
+
+type CategoryGetResponse = { status: string; category: Category };
+
+const fetcher = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, 
+    { headers: 
+      { Authorization: token } 
+    }
+  );
+  const json = (await res.json()) as CategoryGetResponse;
+  if (!res.ok) throw new Error(json?.status ?? `HTTP ${res.status}`);
+  return json;
+};
 
 
 export default function AdminEditCategory() {
@@ -18,8 +32,23 @@ export default function AdminEditCategory() {
   const categoryId = typeof idParam === "string" ? Number(idParam) : NaN;  // 1) idがstringのときだけ数値化
   const isValidCategoryId = Number.isFinite(categoryId) && categoryId > 0; // 2) 有効判定（NaNじゃない、かつ 1以上）
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const swrKey =
+    !sessionLoading && token && isValidCategoryId
+      ? [`/api/admin/categories/${categoryId}`, token]
+      : null;
+
+  const { data, error, isLoading, mutate } = useSWR(swrKey, fetcher);
+
+  // 「最初の1回だけ」SWRの取得結果をフォームに流し込む
+  useEffect(() => {
+    if (!data?.category) return;
+    setName((prev) => (prev === "" ? data.category.name ?? "" : prev));
+  }, [data]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
 
     if (isSubmitting) return; // 二重送信ガード
     if (sessionLoading) return
@@ -47,7 +76,7 @@ export default function AdminEditCategory() {
       }
 
       alert(`カテゴリを更新しました！（id: ${data.category.id}）`);
-
+      await mutate(); 
     } catch (error) {
       console.error(error);
       alert("通信エラーが発生しました");
@@ -85,34 +114,6 @@ export default function AdminEditCategory() {
       } finally { setIsSubmitting(false) }
     };
 
-useEffect(() => {
-  if (sessionLoading) return;
-  if (!token) return;
-  if (!isValidCategoryId) return;
-
-  const fetchCategory = async () => {
-    try {
-      const res = await fetch(`/api/admin/categories/${categoryId}`, {
-        headers: { Authorization: token },
-      });
-
-      if (!res.ok) {
-        alert("カテゴリーの取得に失敗しました");
-        return;
-      }
-
-      const json = await res.json();
-      const data = json.category as Category;
-      setName(data.name ?? "");
-    } catch (error) {
-      console.error(error);
-      alert("通信エラーが発生しました");
-    }
-  };
-
-  fetchCategory();
-}, [sessionLoading, token, isValidCategoryId, categoryId]);
-
   if (!isValidCategoryId) {
     return (
       <div className={styles.container}>
@@ -122,6 +123,8 @@ useEffect(() => {
   }
   if (sessionLoading) return <p>読み込み中...</p>
   if (!token) return <p>ログインが必要です</p>
+  if (isLoading) return <p>読み込み中...</p>;
+  if (error) return <p>取得エラーが発生しました</p>;
 
 return (
   <div className={styles.container}>

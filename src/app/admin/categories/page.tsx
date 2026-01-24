@@ -18,8 +18,7 @@ const fetcher = async ([url, token]: [string, string]) => {
 export default function AdminCategoriesPage() {
   const { token, sessionLoading } = useSupabaseSession();
 
-  const key =
-    sessionLoading || !token ? null : (["/api/admin/categories", token] as const);
+  const key = sessionLoading || !token ? null : (["/api/admin/categories", token] as const);
 
   const { data, error, isLoading } = useSWR(key, fetcher);
 
