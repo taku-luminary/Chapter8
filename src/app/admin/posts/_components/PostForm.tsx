@@ -65,7 +65,8 @@ useEffect(() => {
       {/*
       【この1行の意味】
       - レンダリング時： handleSubmit(onSubmit) が実行され、「submitHandler（submitイベント用の関数）」が作られる
-      - form が submit された時：その submitHandler が実行される
+      - 左側のonSubmit:HTML の <form> が元々持っている submit イベント。form が submit された時 submitHandler が実行される
+      - 右側のonSubmit:ユーザーが定義した「data を受け取る処理」以下④
 
       【submitHandler の中で起きること（概念）】
       1. event.preventDefault()（ページ遷移を止める）

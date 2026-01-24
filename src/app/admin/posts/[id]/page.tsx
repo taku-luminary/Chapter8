@@ -90,15 +90,15 @@ const { data: swrData, error: swrError, isLoading, mutate } = useSWR(swrKey, fet
 
   //・onSubmit は、RHF によって集められた data を受け取るためにユーザーが定義した関数である。
   //・data を集める処理自体は、この関数の中には存在しない。
-  //PostForm.tsxの<form onSubmit={handleSubmit(onSubmit)}>
+    //PostForm.tsxの<form onSubmit={handleSubmit(onSubmit)}>
   //・ここで使われている handleSubmit は react-hook-form が提供する関数。
   //・RHF の handleSubmit は、以下のような submit 用の関数を内部で生成する。
-  // const submitHandler = async (event) => {
-  // event.preventDefault();
-  // const data = getValuesFromRHFStore();  内部ストアから値を集めて data を生成する
-  // await onSubmit(data);};  handleSubmit(onSubmit) と書いた通り、引数として渡された onSubmit に data を渡して実行する
+    // const submitHandler = async (event) => {
+    // event.preventDefault();
+    // const data = getValuesFromRHFStore();  内部ストアから値を集めて data を生成する
+    // await onSubmit(data);};  handleSubmit(onSubmit) と書いた通り、引数として渡された onSubmit に data を渡して実行する
   //・つまり、data を集めているのは RHF の handleSubmit
-  //・onSubmit は、集められた data を受け取るだけの関数
+  //・以下ユーザー定義のonSubmit は、集められた data を受け取るだけの関数
   const onSubmit: SubmitHandler<PostFormInputs> = async (data) => {
     if (isSubmitting) return; // 二重送信ガード
     if (!token) return
