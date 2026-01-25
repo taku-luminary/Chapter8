@@ -4,14 +4,20 @@ export type Category = {
   createdAt: string;
 };
 
-// ▼ UIで使う“フラット化後”の型（一覧/詳細でそのまま使いやすい）
 export type Post = {
   id: number;
   title: string;
   content: string;
   createdAt: string;
   updatedAt: string;
-  thumbnailUrl: string;          // ← microCMSの thumbnail.url ではなく単独プロパティ
+  thumbnailImageKey: string;          
   categories: Category[];
   postCategories: { category: { id: number; name: string } }[]
 };
+
+export type PostFormInputs = {
+  title: string
+  content: string
+  thumbnailImageKey: string
+  categories:number[]
+}

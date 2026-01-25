@@ -2,26 +2,32 @@
 
 import styles from "./_styles/Categories.module.css";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Category } from "../../_types/Post";
+import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
+import useSWR from "swr";
+
+type CategoriesResponse = { status: string; categories: Category[] };
+
+const fetcher = async ([url, token]: [string, string]) => {
+  const res = await fetch(url, { headers: { Authorization: token } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as CategoriesResponse;
+};
+
 
 export default function AdminCategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]); 
+  const { token, sessionLoading } = useSupabaseSession();
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/api/admin/categories');
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const {categories} = (await res.json()) as {status: string; categories: Category[];};
-        setCategories(categories);
-      } catch (e) {
-      }
-    })();
-  }, []);
+  const key = sessionLoading || !token ? null : (["/api/admin/categories", token] as const);
 
+  const { data, error, isLoading } = useSWR(key, fetcher);
+
+  if (sessionLoading) return <p>読み込み中...</p>;
+  if (!token) return <p>ログインが必要です</p>;
+  if (isLoading) return <p>読み込み中...</p>;
+  if (error) return <p>カテゴリーの取得に失敗しました</p>;
+
+  const categories = data?.categories ?? [];
   return(
   <>
     <main className={styles.main}>
@@ -31,10 +37,10 @@ export default function AdminCategoriesPage() {
       </div>
         <div className={styles.articleBox}>
           {categories.map((c) => (
-          <>
-            <Link href={`/admin/categories/${c.id}`} key={c.id} className={styles.article}>{c.name}</Link>
+          <div key={c.id}>
+            <Link href={`/admin/categories/${c.id}`}  className={styles.article}>{c.name}</Link>
             <div className={styles.border}></div>
-          </>
+          </div>
           ))}
         </div>
     </main>

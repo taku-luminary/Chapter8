@@ -1,21 +1,22 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
+
 
 // ブログ記事テーブル
 model Post {
-  id             Int            @id @default(autoincrement())
-  title          String
-  content        String
-  thumbnailUrl   String
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  postCategories PostCategory[]
+  id                Int            @id @default(autoincrement())
+  title             String
+  content           String
+  thumbnailImageKey String
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  postCategories    PostCategory[]
 }
 
 // カテゴリーテーブル

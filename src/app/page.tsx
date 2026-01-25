@@ -2,43 +2,26 @@
 
 import styles from "./_styles/App.module.css";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Post } from "./_types/Post";
+import { usePublicFetch } from "@/app/_hooks/usePublicFetch";
+
+type PostsResponse = { posts: Post[] };
+
+  //・function内に書くと「親コンポーネントが再レンダリングされるたびに、その関数は“作り直される”」
+  //・function外に書くと「アプリ起動時に1回だけ定義され、その後は同じ関数がずっと使われる」
 
 function Articles() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(false);   // 読み込み中
-  const [error, setError] = useState<string|null>(null);           // エラー文言保持
 
   const formatDate = (iso : string ) =>
    new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' });
 
-  // APIでpostsを取得する処理をuseEffectで実行します。
-  useEffect(() => {
-    (async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const res = await fetch('/api/posts');
-        if (!res.ok) {
-          // 一覧APIなら404はレアですが、念のため全ての非2xxをエラー扱い
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const {posts} = (await res.json()) as { posts: Post[] };
-        // APIの形に合わせて安全に取り出す（data.postsが無い場合もnull合体で空配列に）
-        setPosts(posts);
-      } catch (e) {
-        if (e instanceof Error) {
-            setError(e.message);
-          } else {
-            setError("一覧の取得に失敗しました");
-          }
-        setPosts([]);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
+  const { data, error, isLoading } = usePublicFetch<PostsResponse>("/api/posts");
+
+
+  // SWRのdataが来るまで posts は undefined なので安全に
+   const posts = data?.posts ?? [];
+  //data?.posts の意味（オプショナルチェーン）: dataが無ければ、エラーにせず undefined を返す
+  // ?? [] の意味（Null合体演算子）:左側が null または undefined のときだけ、右側を使う
 
 
   // ① 読み込み中

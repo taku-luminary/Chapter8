@@ -1,79 +1,98 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import styles from "./_styles/ArticleDetail.module.css";
 import { Post } from "../../_types/Post";
 import Image from "next/image";
+import { supabase } from "@/utils/supabase";
+import useSWR from "swr";
+
+type PostResponse = { post: Post };
+
+// 404は「記事なし(null)」として返すfetcher
+const postFetcher = async (url: string): Promise<Post | null> => {
+  const res = await fetch(url);
+
+  if (res.status === 404) {
+    return null; // 見つからない：エラーではなく「0件」という扱いにする
+  }
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+ 
+  const data = (await res.json()) as PostResponse;
+  return data.post;
+};
+
+//  thumbnailImageKey から public URL を作るfetcher
+const thumbnailUrlFetcher = async (thumbnailImageKey: string): Promise<string> => {
+  const { data } = supabase.storage
+    .from("post_thumbnail")
+    .getPublicUrl(thumbnailImageKey);
+
+  // data.publicUrl は基本常にある想定だけど、念のため
+  if (!data?.publicUrl) {
+    throw new Error("サムネイルURLの取得に失敗しました");
+  }
+  return data.publicUrl;
+};
 
 export default function ArticleDetails() {
-  const [isLoading, setIsLoading] = useState(true); 
-  const [post, setPost] = useState<Post | null>(null);
-  const [error, setError] = useState("");
-
+ 
   const { id } = useParams<{ id: string }>();
-  useEffect(() => {
-    if (!id) return;
 
-    // id が変わるたびに再取得するので、再び読み込み中に戻す
-    setIsLoading(true);
-    setError("");
-    setPost(null);
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("ja-JP", {
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+    });
 
-    const fetcher = async () => {
-      try {
-        const res = await fetch(`/api/posts/${id}`);
-        console.log(res);
-        // 404（存在しない）と、それ以外のエラーを分けて扱う例
-        if (res.status === 404) {
-          // 見つからない：エラーではなく「0件」という扱いにする
-          setPost(null);
-          return; // finally で isLoading を false にする
-        }
-        console.log(res);
+  //  id があるときだけSWRを動かす（なければnullで停止）
+  const {
+    data: post,
+    error: postError,
+    isLoading: postLoading,
+    mutate: retryPost,
+  } = useSWR(id ? `/api/posts/${id}` : null, postFetcher);
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const {post} = (await res.json()) as  { post: Post };
-        setPost(post);
-      } catch (e) {
-        if (e instanceof Error) {
-          setError(e.message);
-        } else {
-          setError('取得に失敗しました');;
-        }
-        setPost(null);
-      } finally {
-        // 成功でも失敗でも、最後に必ず読み込み完了へ
-        setIsLoading(false);
-      }
-    };
+    // postが取れて、thumbnailImageKeyがある時だけサムネURL取得を動かす
+  const thumbnailKey = post?.thumbnailImageKey ?? null;
 
-    fetcher();
-  }, [id]);
+  const {
+    data: thumbnailImageUrl,
+    error: thumbnailError,
+    isLoading: thumbnailLoading,
+    mutate: retryThumbnail,
+  } = useSWR(thumbnailKey, thumbnailUrlFetcher);
 
-  const formatDate = (iso : string) =>
-    new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' });
-
-  // ① 読み込み中
-  if (isLoading) {
+  // ① 記事読み込み中
+  if (postLoading) {
     return <p>読み込み中...</p>;
   }
 
   // ② 通信・サーバーエラー
-  if (error) {
-    return <p>エラーが発生しました({error})</p>;
+  if (postError) {
+    return <p>エラーが発生しました（{postError.message}）</p>;
   }
 
   // ③ 読み込みは終わったが記事が無い（404/空データ）
   if (!post) {
     return <p>記事が見つかりませんでした。</p>;
   }
-
+// 画像の表示
   return (
     <div className={styles.article}>
-    {post.thumbnailUrl && ( <Image className={styles.picture} src={post.thumbnailUrl} alt="" width={800} height={400} /> ) }
+      {thumbnailImageUrl && (
+        <div className="mt-2">
+        <Image src={thumbnailImageUrl}
+          alt="thumbnail"
+          width={400}
+          height={400}
+        />
+        </div>
+      )}
+
       <div className={styles.dayCategory}>
         <span>{formatDate(post.createdAt)}</span>
         <div className={styles.categories}>
@@ -89,5 +108,7 @@ export default function ArticleDetails() {
         <div dangerouslySetInnerHTML={{ __html: post.content }} />
       </div>
     </div>
+
+    
   );
 }
