@@ -3,20 +3,9 @@
 import styles from "./_styles/App.module.css";
 import Link from "next/link";
 import { Post } from "./_types/Post";
-import useSWR from "swr";
+import { usePublicFetch } from "@/app/_hooks/usePublicFetch";
 
 type PostsResponse = { posts: Post[] };
-
-// ① fetcherを用意（SWRが呼ぶ）
-const fetcher = async (url: string): Promise<PostsResponse> => {
-  const res = await fetch(url);
-
-  // 2xx以外はエラー扱い（今のuseEffect内と同じ思想）
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status}`);
-  }
-  return res.json();
-}
 
   //・function内に書くと「親コンポーネントが再レンダリングされるたびに、その関数は“作り直される”」
   //・function外に書くと「アプリ起動時に1回だけ定義され、その後は同じ関数がずっと使われる」
@@ -26,13 +15,8 @@ function Articles() {
   const formatDate = (iso : string ) =>
    new Date(iso).toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' });
 
-  // ② useEffect + useState を、useSWRに置き換える
-  const { data, error, isLoading, mutate, isValidating } = useSWR("/api/posts",fetcher,
-    { // 必要なら挙動を調整（まずはデフォルトでもOK）
-      // revalidateOnFocus: true, // タブ復帰で再取得（デフォルトtrue）
-      // dedupingInterval: 2000,  // 同一keyの連続リクエストをまとめる（デフォルトあり）
-    }
-  );
+  const { data, error, isLoading } = usePublicFetch<PostsResponse>("/api/posts");
+
 
   // SWRのdataが来るまで posts は undefined なので安全に
    const posts = data?.posts ?? [];

@@ -4,45 +4,38 @@ import { ChangeEvent, useEffect, useState } from "react";
 import styles from "./_styles/Posts_[id].module.css";
 import { Post, PostFormInputs } from "../../../_types/Post";
 import { useRouter, useParams } from "next/navigation";
-import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
 import { supabase } from '@/utils/supabase'
 import { v4 as uuidv4 } from 'uuid'  // 固有IDを生成するライブラリ
 import { SubmitHandler, useForm } from "react-hook-form";
-import useSWR from "swr";
+import { useAuthedFetch } from "@/app/_hooks/useAuthedFetch";
 
 type GetPostResponse = { status: string; post: Post };
-
-const fetcherWithToken = async ([url, token]: [string, string]) => {
-  const res = await fetch(url, { headers: { Authorization: token } });
-  const json = (await res.json()) as GetPostResponse;
-
-  if (!res.ok) {
-    // ここはAPIの返し方に合わせて調整
-    throw new Error(json?.status ?? "記事の取得に失敗しました");
-  }
-  return json;
-};
 
 export default function AdminEditPage() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const params = useParams();
-  const idParam = params?.id;
-  const { token, sessionLoading } = useSupabaseSession()  
+  const idParam = params?.id; 
+
   const postId = typeof idParam === "string" ? Number(idParam) : NaN;  // 1) idがstringのときだけ数値化
   const isValidPostId = Number.isFinite(postId) && postId > 0; // 2) 有効判定（NaNじゃない、かつ 1以上）
 
-  const { register,handleSubmit, watch,formState: { errors , isSubmitting},setValue,reset} = useForm<PostFormInputs>({
+  const endpoint = isValidPostId ? `/api/admin/posts/${postId}` : null;
+  const {
+    data: swrData,
+    error: swrError,
+    isLoading,
+    mutate,
+    sessionLoading,
+    token,
+  } = useAuthedFetch<GetPostResponse>(endpoint);
+
+
+  const { register,handleSubmit, watch,formState: { isSubmitting },setValue,reset} = useForm<PostFormInputs>({
     defaultValues: {title:"",content:"",thumbnailImageKey:"",categories:[]}
   })
   const selectedCategoryIds = watch("categories")
 
-    //  token と postId が揃ったらだけ取得
-  const swrKey = !sessionLoading && token && isValidPostId
-    ? [`/api/admin/posts/${postId}`, token] as const
-    : null;
-
-const { data: swrData, error: swrError, isLoading, mutate } = useSWR(swrKey, fetcherWithToken);
 
     //  取得できたらフォームに一括反映（setValue連打より安全）
   useEffect(() => {
@@ -100,7 +93,6 @@ const { data: swrData, error: swrError, isLoading, mutate } = useSWR(swrKey, fet
   //・つまり、data を集めているのは RHF の handleSubmit
   //・以下ユーザー定義のonSubmit は、集められた data を受け取るだけの関数
   const onSubmit: SubmitHandler<PostFormInputs> = async (data) => {
-    if (isSubmitting) return; // 二重送信ガード
     if (!token) return
     if (data.categories.length === 0) {
       alert("カテゴリーを1つ以上選択してください");
@@ -171,12 +163,6 @@ const { data: swrData, error: swrError, isLoading, mutate } = useSWR(swrKey, fet
   };
 
 
-  //  SWRのローディング/エラー
-  if (sessionLoading) return <p>読み込み中...</p>
-  if (!token) {
-    return <p>ログインが必要です</p> // or router.replace('/login')
-  }
-
   if (!isValidPostId) {
     return (
       <div className={styles.container}>
@@ -184,12 +170,10 @@ const { data: swrData, error: swrError, isLoading, mutate } = useSWR(swrKey, fet
       </div>
     );
   }
-
-  // SWRの状態チェック
+  if (sessionLoading) return <p>読み込み中...</p>;
+  if (!token) return <p>ログインが必要です</p>;
   if (isLoading) return <p>記事を読み込み中...</p>;
-  if (swrError) {
-    return <p>記事の取得に失敗しました: {swrError instanceof Error ? swrError.message : String(swrError)}</p>;
-  }
+  if (swrError) return <p>記事の取得に失敗しました: {swrError instanceof Error ? swrError.message : String(swrError)}</p>;
 
   return (
     <div className={styles.container}>

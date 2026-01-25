@@ -7,20 +7,10 @@ import { useRouter, useParams } from "next/navigation";
 import { CategoryForm } from "../../_components/CategoryForm";
 import { UpdateCategoryRequestBody,CategoryApiResponse } from '@/app/_types/Category'
 import { useSupabaseSession } from "@/app/_hooks/useSupabaseSession";
-import useSWR from "swr";
+import { useAuthedFetch } from "@/app/_hooks/useAuthedFetch";
+
 
 type CategoryGetResponse = { status: string; category: Category };
-
-const fetcher = async ([url, token]: [string, string]) => {
-  const res = await fetch(url, 
-    { headers: 
-      { Authorization: token } 
-    }
-  );
-  const json = (await res.json()) as CategoryGetResponse;
-  if (!res.ok) throw new Error(json?.status ?? `HTTP ${res.status}`);
-  return json;
-};
 
 
 export default function AdminEditCategory() {
@@ -29,22 +19,28 @@ export default function AdminEditCategory() {
   const router = useRouter();
   const params = useParams();
   const idParam = params?.id;  
-  const categoryId = typeof idParam === "string" ? Number(idParam) : NaN;  // 1) idがstringのときだけ数値化
-  const isValidCategoryId = Number.isFinite(categoryId) && categoryId > 0; // 2) 有効判定（NaNじゃない、かつ 1以上）
+  const categoryId = typeof idParam === "string" ? Number(idParam) : NaN;  // 1) 実際にAPIに渡すID（値）：idがstringのときだけ数値化
+  const isValidCategoryId = Number.isFinite(categoryId) && categoryId > 0; // 2) そのIDが正しいかの判定（条件）：NaNじゃない、かつ 1以上
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const swrKey =
-    !sessionLoading && token && isValidCategoryId
-      ? [`/api/admin/categories/${categoryId}`, token]
-      : null;
+  const { data, error, isLoading, mutate } =
+  useAuthedFetch<CategoryGetResponse>(
+    isValidCategoryId
+      ? `/api/admin/categories/${categoryId}`
+      : null
+  );
 
-  const { data, error, isLoading, mutate } = useSWR(swrKey, fetcher);
 
   // 「最初の1回だけ」SWRの取得結果をフォームに流し込む
   useEffect(() => {
     if (!data?.category) return;
     setName((prev) => (prev === "" ? data.category.name ?? "" : prev));
   }, [data]);
+  //prev === "" ? data.category.name ?? "" : prev のコードについて
+    //■ prevが""→API から取得したdata.category.name を見る 
+      // ・結果、data.category.nameに値がある→その値をセット 
+      // ・結果、null または undefined →""をセット 
+    // ■prevにすでに何か値が入っている→prevを使う（上書きしない）
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
